@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!-- Include your existing styles and meta tags here -->
+    <title>Drag and Drop Quiz</title>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="stylesheets/styles.css" />
+    <!-- Font Awesome to provide free UI and brand icons, etc  -->
+    <script
+      src="https://kit.fontawesome.com/5fc568bca2.js"
+      crossorigin="anonymous">
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="keywords" content="" />
+    <meta name="description" content="" />
+    <!-- Google fonts- they're good, free, and fast to load in -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap"
+      rel="stylesheet" />
+    <!-- FavIcon -->
+    <link rel="icon" type="image/x-icon" href="images/favicon.gif" />
+  </head>
+
+  <body>
+    <header>
+      <nav></nav>
+    </header>
+
+    <main>
+      <div class="headline_div">
+        <h1>Drag & Drop Quiz</h1>
+        <p>Drag to sort items from the left into the boxes on the right.<br>Once all the sorting is done, enter your email address in the box below and click Submit. This must be the email address we have on record for you.<br>Your answers will be recorded in a spreadsheet.<br>Do not attempt this quiz more than once, only your first attempt will be accepted.</p>
+      </div>
+
+      <!-- Audio Sound FX -->
+      <audio id="clickSound" src="audio/minimal_pop_click_sound_fx.mp3" preload="auto"></audio>
+      <audio id="dropSound" src="audio/drop_sound_fx.mp3" preload="auto"></audio>
+      <audio id="cancelSound" src="audio/bloop_sound_2_fx.mp3" preload="auto"></audio>
+
+      <!-- Form -->
+      <form id="quizForm">
+        <div id="quizContainer"></div>
+        
+        <div class="submit_div">
+          <label for="email">Enter your email:</label>
+          <input type="email" id="email" name="email" class="email" required pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"/>
+          <button id="submit_btn" type="submit">Submit</button>
+        </div>
+      </form>
+    </main>
+
+    <footer>
+      <p>
+        <ul class="social-media-icons">
+          <li><a href="#"><img class="social-icon" src="images/twitter.svg" alt="Twitter"></a></li>
+          <li><a href="#"><img class="social-icon" src="images/facebook.svg" alt="Facebook"></a></li>
+          <li><a href="#"><img class="social-icon" src="images/instagram.svg" alt="Instagram"></a></li>
+          <li><a href="https://www.linkedin.com/in/tommyfieldcreative/recent-activity/articles/"><img class="social-icon" src="images/linkedin.svg" alt="Instagram"></a></li>
+        </ul><br>
+        App designed by Tom Myfield | legal | site map | links | back to top | etc<br>
+        <a href="www.runninghead.com">&copy; runninghead.com</a>
+      </p>
+    </footer>
+
+    <script>
+  document.addEventListener('DOMContentLoaded', async (event) => {
+    // SOUND FX :::::::::::::::::::::::::::::::::::::::
+    const draggables = document.querySelectorAll('.draggable');
+    const dropzones = document.querySelectorAll('.dropzone, .draggable_div');
+    const dropSound = document.getElementById('dropSound');
+    const clickSound = document.getElementById('clickSound');
+    const cancelSound = document.getElementById('cancelSound');
+    let dropped = false;
+
+    draggables.forEach(draggable => {
+      draggable.addEventListener('dragstart', dragStart);
+      draggable.addEventListener('mousedown', () => {
+        clickSound.play();
+      });
+      draggable.addEventListener('dragend', (event) => {
+        if (!dropped) {
+          cancelSound.play();
+        }
+        dropped = false; // Reset the flag
+      });
+    });
+
+    // D&D functionality :::::::::::::::::::::::::::::::::::::::::::
+    dropzones.forEach(dropzone => {
+      dropzone.addEventListener('dragover', dragOver);
+      dropzone.addEventListener('drop', drop);
+    });
+
+    function dragStart(event) {
+      event.dataTransfer.setData('text/plain', event.target.id);
+      setTimeout(() => {
+        event.target.classList.add('dragging');
+      }, 0);
+    }
+
+    function dragOver(event) {
+      event.preventDefault();
+    }
+
+    function drop(event) {
+      event.preventDefault();
+      const id = event.dataTransfer.getData('text');
+      const draggableElement = document.getElementById(id);
+      if (draggableElement && (event.target.classList.contains('dropzone') || event.target.classList.contains('draggable_div'))) {
+        event.target.appendChild(draggableElement);
+        draggableElement.classList.remove('dragging');
+        dropSound.play();
+        dropped = true; // Set the flag
+      }
+    }
+
+    // Fetch questions from Google Apps Script
+    try {
+      const response = await fetch('https://script.google.com/macros/s/AKfycbxNhUfKK3DOjPgjLcxRl_vAy0Ypsx_yqWLIv2MyhA8225gprFwDgNnD0WU3PMWqOtXb/exec?method=getQuestions');
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const questions = await response.json();
+      // Populate the quiz with questions
+      populateQuiz(questions);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+    }
+
+    function populateQuiz(questions) {
+      // Implement your logic to populate the quiz with questions
+      // For example:
+      // Loop through questions and dynamically create HTML elements
+    }
+
+    // Email validation and form submission
+    async function submitForm(event) {
+      event.preventDefault();
+
+      const email = document.getElementById('email').value;
+
+      if (email.trim() === '') {
+        alert('Please enter your email address.');
+        return;
+      }
+
+      // Email regex for basic validation
+      const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+      if (!emailPattern.test(email)) {
+        alert('Please enter a valid email address.');
+        return;
+      }
+
+      // Disable the submit button to prevent multiple submissions
+      document.getElementById('submit_btn').disabled = true;
+
+      // Collect answers from the quiz (example)
+      const answers = collectAnswers();
+
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('answers', JSON.stringify(answers));
+
+      // Replace this URL with the URL of your deployed Google Apps Script Web App
+      const url = 'https://script.google.com/macros/s/AKfycbxNhUfKK3DOjPgjLcxRl_vAy0Ypsx_yqWLIv2MyhA8225gprFwDgNnD0WU3PMWqOtXb/exec';
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (response.ok) {
+          alert('Form submitted successfully!');
+          // Hide the submit button
+          document.getElementById('submit_btn').style.display = 'none';
+        } else {
+          throw new Error('Form submission failed.');
+        }
+      } catch (error) {
+        alert('There was an error submitting the form: ' + error.message);
+        document.getElementById('submit_btn').disabled = false;
+      }
+    }
+
+    // Attach submit handler to the form
+    document.getElementById('quizForm').addEventListener('submit', submitForm);
+
+    // Function to collect answers from the quiz (example)
+    function collectAnswers() {
+      // Implement your logic to collect answers from the quiz
+      // For example:
+      const answers = [];
+      // Loop through elements and collect answers
+      return answers;
+    }
+
+  });
+</script>
+
+  </body>
+</html>
